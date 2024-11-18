@@ -1,6 +1,6 @@
-#' FGRS wrapper 
+#' FGLS wrapper 
 #' 
-#' Compute (PA-)FGRS from for a large a dataset
+#' Compute (PA-)FGLS from for a large a dataset
 #' @param proband_ids vector of sample ids indicating which individuals FGRS should be estimated for. 
 #' @param K kinship matrix provided either as a \code{matrix}, a \code{dsCMatrix} or a \code{data.frame} with column names \code{i}, \code{j} and \code{x}.
 #' @param pheno \code{data.frame} containing the phenotype information on the relatives. Must contain columns called \code{id} and \code{aff}. 
@@ -19,7 +19,9 @@
 #' @examples 
 #' pa_fgrs(c(0,1),qnorm(.9),covmat = matrix(c(.5,.25,.25,.25,1,.25,.25,.25,1),3))
 #' @export
-FGRS_wrapper <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=NULL,h2=NULL,env_cor_s=1,env_cor_f=1,env_cor_m=1,sib_mat=NULL,father_mat=NULL,mother_mat=NULL){
+FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,t2=NULL,h2=NULL,env_cor_s=1,env_cor_f=1,env_cor_m=1,sib_mat=NULL,father_mat=NULL,mother_mat=NULL){
+  thr <- t2 
+  w <- t1
   if(is.numeric(proband_ids)) proband_ids <- as.integer(proband_ids)
   if(class(K)[1]=="matrix") K <- as(K, "sparseMatrix")
   if(class(K)[1]=="dsCMatrix"){
@@ -136,7 +138,7 @@ FGRS_wrapper <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=NULL,h2=
         out1 <- data.frame(pheno_k[-1,.(mean(z*w*r*c,na.rm=T),sum(r[!is.na(z*w*r*c)]))])} else
           out1 <- data.frame(0,0)
       
-      } else  if(method=="PAFGRS") out1 <- pa_fgrs(rel_status = pheno_k$aff[-1],rel_thr =pheno_k$thr[-1],rel_w = pheno_k$w[-1],covmat = as.matrix(covmat))
+      } else  if(method=="PAFGRS") out1 <- pa_fgrs2thr(rel_t1 = pheno_k$thr[-1],rel_t2 =ifelse(pheno_k$aff[-1]==1,pheno_k$thr[-1],Inf),covmat = as.matrix(covmat))
     return(out1)  
   
   })

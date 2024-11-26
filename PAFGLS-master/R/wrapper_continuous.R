@@ -20,7 +20,7 @@
 #' pa_fgrs(c(0,1),qnorm(.9),covmat = matrix(c(.5,.25,.25,.25,1,.25,.25,.25,1),3))
 #' @export
 FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,t2=NULL,h2=NULL,env_cor_s=1,env_cor_f=1,env_cor_m=1,sib_mat=NULL,father_mat=NULL,mother_mat=NULL){
-  thr <- t2 
+  thr <- t1 
   w <- t1
   if(is.numeric(proband_ids)) proband_ids <- as.integer(proband_ids)
   if(class(K)[1]=="matrix") K <- as(K, "sparseMatrix")
@@ -68,7 +68,7 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
   if(!all(c("id","aff") %in% colnames(pheno))) stop("'pheno' should contain columns 'id' and 'aff'")
   setkey(pheno,id)
   if(pheno[,any(aff==1&w!=1)]) { pheno[aff==1,w:=1]
-    message("setting w=1, for all relatives with aff==1")}
+    #message("setting") w=1, for all relatives with aff==1")}
   #if(any(!proband_ids %in% pheno$id)) stop("some proband ids are not in pheno$id")
   if(any(!proband_ids %in% K[,c(unique(i),unique(j))])) warning("some proband_ids do not seem to have any relatives, returning postM=0")
   if(any( colnames(pheno) %in% c("fatherid","motherid","id_f","id_m","momid","dadid"))){

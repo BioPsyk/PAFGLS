@@ -103,10 +103,7 @@ Firstly, you have to decided the value for some variables for the phenotype defi
 Using these variables you will compute a phenotype dataframe that includes the columns: id, aff, t1, t2
 1. id = the identification number of the relative.
 2. aff = dead or alive as a binary variable.
-3. t1 = the scaled* death age of the individual at the end of follow up or if dead, input the age at death.
-4. t2 = a metric from 0 - 1 that describes each individuals accumulated risk for the event (death), as determined by the lifetable (same as k_p, since k_pop=1).
-
-* formula: (age at end of follow up or age of death-mean(age of death for the people who died))/sd(age of death for the people who died) = t2
+3. t1 = qnorm(k_p), and set any value of 0 to 0.001 and 1 to 0.999 (adding more decimals will create NAs; k_p = a metric from 0 - 1 that describes each individuals accumulated risk for the event (death), as determined by the lifetable)
 
 We are using a two-threshold model ...
 
@@ -116,7 +113,7 @@ Additionally you will supply the wrapper function with a list of you proband ids
 
 Your run the script by calling the following code, if we assume that our kinship matrix is called "K" and our phenotype dataframe is called "pheno":
 ```
-output <- FGLS_wrapper_continuous(proband_ids,K,pheno,method="PAFGRS",h2,t1=pheno$t1,t2=pheno$t2)
+output <- FGLS_wrapper_continuous(proband_ids,K,pheno,method="PAFGRS",h2,t1=pheno$t1)
 ```
 
 ### Output

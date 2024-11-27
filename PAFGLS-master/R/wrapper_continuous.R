@@ -67,8 +67,8 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
   pheno <- data.table(pheno)
   if(!all(c("id","aff") %in% colnames(pheno))) stop("'pheno' should contain columns 'id' and 'aff'")
   setkey(pheno,id)
-  if(pheno[,any(aff==1&w!=1)]) { pheno[aff==1,w:=1]
-    #message("setting") w=1, for all relatives with aff==1")}
+  #if(pheno[,any(aff==1&w!=1)]) { pheno[aff==1,w:=1]
+  #  message("setting w=1, for all relatives with aff==1")}
   #if(any(!proband_ids %in% pheno$id)) stop("some proband ids are not in pheno$id")
   if(any(!proband_ids %in% K[,c(unique(i),unique(j))])) warning("some proband_ids do not seem to have any relatives, returning postM=0")
   if(any( colnames(pheno) %in% c("fatherid","motherid","id_f","id_m","momid","dadid"))){
@@ -184,4 +184,4 @@ FGRS_kendler = function(pheno_t,k_sparse_t,sib_mat_t,father_mat_t,mother_mat_t,e
   FGRS = S*vs/(vs+vz/sum_r)
   FGRS_out <- data.table(id= as.numeric(rownames(FGRS) ),FGRS=FGRS[,1])
   FGRS_out
-}
+  }

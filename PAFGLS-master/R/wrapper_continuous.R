@@ -5,8 +5,7 @@
 #' @param K kinship matrix provided either as a \code{matrix}, a \code{dsCMatrix} or a \code{data.frame} with column names \code{i}, \code{j} and \code{x}.
 #' @param pheno \code{data.frame} containing the phenotype information on the relatives. Must contain columns called \code{id} and \code{aff}. 
 #' @param method character indicating which FGRS method to use. Default is \code{method="PAFGRS"}. 
-#' @param thr numeric vector wiht threshold value used for each relative in \code{pheno}.
-#' @param w numeric vector of proportion of risk experienced by each relative in \code{pheno}.
+#' @param t1 number vector of threshold values
 #' @param h2 numeric heritability estimate of the phenotype (liability scale). 
 #' @param env_cor_s numeric indicating the down-weighting of siblings (only used for Ohlsson-Kendler FGRS). Default =1 (no correction).
 #' @param env_cor_f numeric indicating the down.weighting of fathers (only used for Ohlsson-Kendler FGRS). Default =1 (no correction).
@@ -19,9 +18,12 @@
 #' @examples 
 #' pa_fgrs(c(0,1),qnorm(.9),covmat = matrix(c(.5,.25,.25,.25,1,.25,.25,.25,1),3))
 #' @export
-FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,t2=NULL,h2=NULL,env_cor_s=1,env_cor_f=1,env_cor_m=1,sib_mat=NULL,father_mat=NULL,mother_mat=NULL){
-  thr <- t1 
-  w <- t1
+FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,h2=NULL,env_cor_s=1,env_cor_f=1,env_cor_m=1,sib_mat=NULL,father_mat=NULL,mother_mat=NULL){
+  pheno$t2 <- t1
+  pheno[pheno$aff==0,]$t2 <- Inf
+  pheno[pheno$aff==0 & pheno$t1==0,]$t2 <- 0
+  pheno$w <- 1 # only used for accuracy function
+  pheno[pheno$aff==0 & pheno$t1==0,]$w <- 0
   if(is.numeric(proband_ids)) proband_ids <- as.integer(proband_ids)
   if(class(K)[1]=="matrix") K <- as(K, "sparseMatrix")
   if(class(K)[1]=="dsCMatrix"){
@@ -57,12 +59,9 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
     if(!class(sib_mat)[1]=="data.table") stop("sib_mat should be either a data.frame or a data.table")
   setkey(sib_mat,i,j)}
   
-  if(!is.null(thr)) pheno$thr = thr 
-  if(!"thr" %in% colnames(pheno)) 
-    stop("'thr' should be provided either as a column in 'pheno' or by the 'thr' argument")
-  if(!is.null(w)) pheno$w = w
-  if(!"w" %in% colnames(pheno)) 
-    stop("'w' should be provided either as column in 'pheno' or by the 'w' argument")
+  if(!is.null(t1)) pheno$t1 = t1 
+  if(!"t1" %in% colnames(pheno)) 
+    stop("'t1' should be provided either as a column in 'pheno' or by the 't1' argument")
 
   pheno <- data.table(pheno)
   if(!all(c("id","aff") %in% colnames(pheno))) stop("'pheno' should contain columns 'id' and 'aff'")
@@ -112,7 +111,8 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
                              dimnames=list(1:k_proband[,max(c(i_ind,j_ind))],1:k_proband[,max(c(i_ind,j_ind))]))[match(k,sort(k)),match(k,sort(k))] else
                                covmat <- matrix(h2)
   
-    diag(covmat) <- 1  
+    rel_mat <- covmat/h2 
+    diag(rel_mat) <- diag(covmat) <- 1  
     covmat[1,1] <- h2
       # 
       # print(k)
@@ -138,7 +138,11 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
         out1 <- data.frame(pheno_k[-1,.(mean(z*w*r*c,na.rm=T),sum(r[!is.na(z*w*r*c)]))])} else
           out1 <- data.frame(0,0)
       
-      } else  if(method=="PAFGRS") out1 <- pa_fgrs2thr(rel_t1 = pheno_k$thr[-1],rel_t2 =ifelse(pheno_k$aff[-1]==1,pheno_k$thr[-1],Inf),covmat = as.matrix(covmat))
+      } else  if(method=="PAFGRS") { out1 <- pa_fgrs_cont(rel_value = pheno_k$t1[-1],covmat = as.matrix(covmat)) } else  if(method=="accuracy") {if(length(k)>1 & any(rowSums(pheno_k[-c(1),-c(1)])>0)) {
+                        out1 <- r_fgrs_pedigree_int(rel_prev =1-pnorm(pheno_k$t1[-1]),
+                                        rel_w = pheno_k$w[-1],
+                                        rel_matrix =  as.matrix(rel_mat))} else
+                                          out1 <- c(0,0)}
     return(out1)  
   
   })
@@ -149,7 +153,7 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
     out[,FGRS := out[,V2*vs/(vs+vz/V3)]]
     out = out[,.(id,FGRS,n_rels,s=V2,vs=vs,vz=vz,sum_r=V3)]
 
-      } else if(method=="PAFGRS") {out=data.frame(id=rels_and_self[,i], t(ghat),n_rels=rels_and_self[,sapply(V1,length)-1])}
+      } else if(method %in%c("PAFGRS","accuracy")) {out=data.frame(id=rels_and_self[,i], t(ghat),n_rels=rels_and_self[,sapply(V1,length)-1])}
   if(method=="OK2"){
   K <- data.table(K)
   K[,i_ind:=match(i,pheno$id)]
@@ -157,7 +161,8 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
   k_sparse_t <- sparseMatrix(i = K$i_ind,j = K$j_ind,x = K$x,dims = rep(length(pheno$id),2),dimnames =list(pheno$id,pheno$id) ,symmetric = T)
   
   out <-FGRS_kendler(pheno_t = pheno,k_sparse_t = k_sparse_t,sib_mat_t = sib_mat,father_mat_t = father_child_mat,mother_mat_t = mother_child_mat,env_cor_f = 0.5,env_cor_m = 0.5,env_cor_sib =0.5 )
-  }
+  } 
+  if(method=="accuracy") out=out[,-3]
   return(data.frame(out))
 }
 

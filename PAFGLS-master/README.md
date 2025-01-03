@@ -105,6 +105,8 @@ Using these variables you will compute a phenotype dataframe that includes the c
 2. aff = dead or alive as a binary variable.
 3. t1 = qnorm(k_p), and set any value of 0 to 0.001 and 1 to 0.999 (adding more decimals will create NAs; k_p = a metric from 0 - 1 that describes each individuals accumulated risk for the event (death), as determined by the lifetable)
 
+You censor individuals by setting aff and t1 to 0.
+
 We are using a two-threshold model ...
 
 ![alt text](image-2.png)
@@ -116,10 +118,20 @@ Your run the script by calling the following code, if we assume that our kinship
 output <- FGLS_wrapper_continuous(proband_ids,K,pheno,method="PAFGRS",h2,t1=pheno$t1)
 ```
 
+### Accuracy
+
+You can get a deregression value ('r') for each individual by changing the method to "accuracy" instead of "PAFGRS". This can be used to deregress your PAFGRS postM scores, to accomodate for differences in family size for the probands. 
+
 ### Output
 
-For both analysis you will get an output dataframe that includes columns: id, postM, postVar, n_rels.
-1. id = identification number of proband.
+For both continuous and binary phenotype analysis you will get an output dataframe that includes columns: id, postM, postVar, n_rels.
+1. id = identification number of proband
 2. postM = posterior mean of score (?)
 3. postVar = p
-4. n_rels = number of relatives that the score was computed from for that proband.
+4. n_rels = number of relatives that the score was computed from for that proband
+
+For the accuracy function you will get the following output:
+1. id = identification number of proband
+2. r =
+3. n_rels = number of relatives that the score was computed from for that proband
+

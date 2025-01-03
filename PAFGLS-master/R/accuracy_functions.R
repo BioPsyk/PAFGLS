@@ -180,12 +180,12 @@ r_fgrs_pedigree_int <- function(prev=0.2 , h2=.5, ped=NULL,rel_matrix=NULL,rel_w
     rel <- kinship(pedigree(id=ped$id,dadid = ped$dadid,momid = ped$momid,sex=ped$sex))*2
   else rel <- rel_matrix
   if(is.null(rel_prev)) rel_prev= rep(prev,nrow(rel)-1)
-  rho_mat <- rel[-1,-1]
-   rho_mat[upper.tri(rho_mat)] <-  
+  rho_mat <- rel[-1,-1,drop=F]
+  if(nrow(rho_mat)>1) rho_mat[upper.tri(rho_mat)] <-  
     apply(which(upper.tri(rho_mat),arr.ind = T),1,function(ind) {
       prev1 <- rel_prev[ind[1]]
       prev2 <- rel_prev[ind[2]]
-      r <- rel[-1,-1][ind[1],ind[2]]
+      r <- rel[-1,-1,drop=F][ind[1],ind[2],drop=F]
       mvtnorm::pmvnorm(lower = c(qnorm(1-prev1),qnorm(1-prev2)),
                        sigma = matrix(c(1,r*h2,r*h2,1),2,2))})
    rho_mat[lower.tri(rho_mat)] <-  t(rho_mat)[lower.tri(rho_mat)] 

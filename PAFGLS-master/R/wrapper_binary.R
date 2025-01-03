@@ -110,7 +110,8 @@ FGLS_wrapper_binary <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=N
                              dimnames=list(1:k_proband[,max(c(i_ind,j_ind))],1:k_proband[,max(c(i_ind,j_ind))]))[match(k,sort(k)),match(k,sort(k))] else
                                covmat <- matrix(h2)
   
-    diag(covmat) <- 1  
+    rel_mat <- covmat/h2 
+    diag(rel_mat) <- diag(covmat) <- 1  
     covmat[1,1] <- h2
       # 
       # print(k)
@@ -136,7 +137,11 @@ FGLS_wrapper_binary <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=N
         out1 <- data.frame(pheno_k[-1,.(mean(z*w*r*c,na.rm=T),sum(r[!is.na(z*w*r*c)]))])} else
           out1 <- data.frame(0,0)
       
-      } else  if(method=="PAFGRS") out1 <- pa_fgrs(rel_status = pheno_k$aff[-1],rel_thr =pheno_k$thr[-1],rel_w = pheno_k$w[-1],covmat = as.matrix(covmat))
+      } else  if(method=="PAFGRS") { out1 <- pa_fgrs(rel_status = pheno_k$aff[-1],rel_thr =pheno_k$thr[-1],rel_w = pheno_k$w[-1],covmat = as.matrix(covmat)) } else  if(method=="accuracy") {if(length(k)>1 & any(rowSums(pheno_k[-c(1),-c(1)])>0)) {
+                        out1 <- r_fgrs_pedigree_int(rel_prev =1-pnorm(pheno_k$thr[-1]),
+                                        rel_w = pheno_k$w[-1],
+                                        rel_matrix =  as.matrix(rel_mat))} else
+                                          out1 <- c(0,0)}
     return(out1)  
   
   })
@@ -147,7 +152,7 @@ FGLS_wrapper_binary <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=N
     out[,FGRS := out[,V2*vs/(vs+vz/V3)]]
     out = out[,.(id,FGRS,n_rels,s=V2,vs=vs,vz=vz,sum_r=V3)]
 
-      } else if(method=="PAFGRS") {out=data.frame(id=rels_and_self[,i], t(ghat),n_rels=rels_and_self[,sapply(V1,length)-1])}
+      } else if(method %in%c("PAFGRS","accuracy")) {out=data.frame(id=rels_and_self[,i], t(ghat),n_rels=rels_and_self[,sapply(V1,length)-1])}
   if(method=="OK2"){
   K <- data.table(K)
   K[,i_ind:=match(i,pheno$id)]
@@ -156,6 +161,7 @@ FGLS_wrapper_binary <- function(proband_ids,K,pheno,method="PAFGRS",thr=NULL,w=N
   
   out <-FGRS_kendler(pheno_t = pheno,k_sparse_t = k_sparse_t,sib_mat_t = sib_mat,father_mat_t = father_child_mat,mother_mat_t = mother_child_mat,env_cor_f = 0.5,env_cor_m = 0.5,env_cor_sib =0.5 )
   }
+  if(method=="accuracy") out=out[,-3]
   return(data.frame(out))
 }
 

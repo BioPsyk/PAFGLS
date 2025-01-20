@@ -1,7 +1,6 @@
 # PA-FGLS
 
-## Comprehensive Guide
-For those who wish to delve deeper and regenerate the vignette, the requisite code is provided below. Please execute this in your R environment for the desired output.
+## Download package
 
 ``` r
 # Make sure to clone this repository
@@ -12,8 +11,14 @@ cd PAFGLS/PAFGLS-master
 
 # Start R and run
 library(devtools)
-load_all()
-build_vignettes()
+devtools::install()
+library(PAFGLS)
+```
+### Install dependecies
+If needed prior to above installation, you can install the dependencies using a conda environment.
+```
+conda env create docker/env.yaml
+conda activate fgls 
 ```
 
 ## Running PAFGLS

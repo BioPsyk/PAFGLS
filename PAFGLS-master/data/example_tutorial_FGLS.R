@@ -18,7 +18,7 @@ out_cont <- FGLS_wrapper_continuous(df$id[1:10000],
             t1=df[!is.na(dead)&!is.na(t1)]$t1,
             method="PAFGRS")
 
-# bianary version
+# binary version
 df$ind_dx <- 0
 df[df$dead==1 & df$age_dx < 50,]$ind_dx <- 1
 df$k_pop <- 0.4
@@ -34,4 +34,22 @@ out_bin <- FGLS_wrapper_binary(df$id[1:10000],
             thr=df[!is.na(ind_dx)&!is.na(w)]$thr,
             w=df[!is.na(ind_dx)&!is.na(w)]$w,
             method="PAFGRS")
+
+###
+###
+
+hist(out_cont$postM,breaks=40)
+hist(out_bin$postM,breaks=40)
+
+colnames(out_cont)[2:3] <- c("postM_cont","postVar_cont")
+colnames(out_bin)[2:3] <- c("postM_bin","postVar_bin")
+
+tmp <- merge(out_cont,out_bin,by=c("id","n_rels"))
+
+plot(tmp$postM_cont,tmp$postM_bin)
+
+
+
+
+
 

@@ -138,7 +138,7 @@ FGLS_wrapper_continuous <- function(proband_ids,K,pheno,method="PAFGRS",t1=NULL,
         out1 <- data.frame(pheno_k[-1,.(mean(z*w*r*c,na.rm=T),sum(r[!is.na(z*w*r*c)]))])} else
           out1 <- data.frame(0,0)
       
-      } else  if(method=="PAFGRS") { out1 <- pa_fgrs_cont(rel_value = pheno_k$t1[-1],covmat = as.matrix(covmat)) } else  if(method=="accuracy") {if(length(k)>1 & any(rowSums(pheno_k[-c(1),-c(1)])>0)) {
+      } else  if(method=="PAFGRS") { out1 <- pa_fgrs2thr(rel_t1 = pheno_k$t1[-1], rel_t2= pheno_k$t2[-1],covmat = as.matrix(covmat)) } else  if(method=="accuracy") {if(length(k)>1 & any(rowSums(pheno_k[-c(1),-c(1)])>0)) {
                         out1 <- r_fgrs_pedigree_int(rel_prev =1-pnorm(pheno_k$t1[-1]),
                                         rel_w = pheno_k$w[-1],
                                         rel_matrix =  as.matrix(rel_mat))} else

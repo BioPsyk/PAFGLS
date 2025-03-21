@@ -85,7 +85,7 @@ Firstly, you have to decided the value for some variables for the phenotype defi
 1. Censoring threshold - the individuals who died prior to this threshold will be censored in analysis (if you do not wish to include censoring, you set this variable to zero). Ex. 5 yrs old, meaning deaths occuring prior to 5 yrs old will be censored in analysis.
 2. Heritability - input an estimate of heritability of the measured trait. Ex. 0.5, meaning 50% 
 
-Using these variables you will compute a phenotype dataframe that includes the columns: id, aff, t1, t2
+Using these variables you will compute a phenotype dataframe that includes the columns: id, aff, t1
 1. id = the identification number of the relative.
 2. aff = dead or alive as a binary variable.
 3. t1 = qnorm(k_p), and set any value of 0 to 0.001 and 1 to 0.999 (adding more decimals will create NAs; k_p = a metric from 0 - 1 that describes each individuals accumulated risk for the event (death), as determined by the lifetable)
